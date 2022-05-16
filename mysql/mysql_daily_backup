@@ -1,0 +1,22 @@
+#!/bin/bash
+
+DBASE="main" #название базы данных передается во время вызова скрипта
+DB_OWNER="user" #пользователь, под которым происходит подключение
+passwordDB="passwordDB" #пароль
+DB_HOST="192.168.0.1" #адрес сервера СУБД
+BACKUP_DIR="/opt/mysql_backup" #путь к хранилищу резервных копий
+KEEP_BACKUP="120" #количество хранимых копий (4 месяца)
+THREADS=3 #количество потоков
+BIN='/usr/bin/mysqldump' #путь к каталогу с актуальной версией mysqldump
+DATE=$(date +%F-%H-%M)
+
+mysqldump -u${DB_OWNER} -p${passwordDB} -h${DB_HOST} $DBASE | gzip > ${BACKUP_DIR}/${DATE}main.sql.gz
+
+if [ "$?" == "0" ]
+then
+    logger -t MySQL_Backup "MySQL Backup success"
+else
+    logger -t MySQL_Backup "MySQL Backup failure"
+fi
+
+find $BACKUP_DIR -name "*main.sql.gz" -mtime +${KEEP_BACKUP} -delete
